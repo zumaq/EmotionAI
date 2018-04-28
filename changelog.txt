@@ -1,0 +1,99 @@
+CHANGELOG
+---------
+v12
+- The AI now correctly calculates the minimum amount of money needed to invest in aircraft
+v10
+- Alternate naming system for the SimpleAI company by 3iff
+- The inflation rate is now correctly handled as a float, possibly avoiding some bugs
+v9
+- Fixed an overflow bug which could cause division by zero
+v8
+- Fixed a bug related to saving games right after loading
+v7
+- Updated to NoAI API version 1.2
+- Support for NewGRF trainsets
+- Support for range-limited aircraft
+- Avoid railtypes that do not support all cargoes
+- Fixed a crash when the game was saved between the construction of two stations
+- A more advanced road vehicle selection algorithm (from DictatorAI)
+- Fixed a rare road buiding bug
+- The AI now uses Road Pathfinder v4 and AyStar v6
+
+v6
+- Added comments to the code
+- Written this readme
+- Refitting train wagons
+- Fix a bug when some old vehicles didn't get replaced at all
+- Support for NewGRF train stations
+- An option to use path signals at single rail stations
+- Avoid going bankrupt because of station maintenance costs
+
+v5
+- Plane support
+- Upgrading existing bridges
+- An option to use PBS signals instead
+- Bugfixes
+
+v4
+- Bugfixes again
+
+v3
+- Bugfix
+
+v2
+- Bugfixes
+- Updated to NoAI API version 1.0
+- Changeable settings in-game
+- An option to use two-way signals (like in TTO)
+
+v1
+- First Bananas release
+- A little change in pathfinder penalties
+
+beta3
+- Bugfixes
+- Checking vehicles which are sitting in the depot
+
+beta2
+- Improvements in save/load
+- Adding wagons to existing trains
+- An option to make the AI slower as the time progresses
+- Bugfixes
+
+beta1
+- Basic save/load support
+- Adding road vehicles to an existing route, up to a limit chosen by the user
+- Replacing older models with newer ones
+- Added setting to specify the number of days to wait between building two routes
+- Flipping passing lane sections
+- A bit more consistency with the HQ builiding behaviour of the old AI, added a setting to build the HQ in a town
+
+alpha5
+- Double railway lines (in the style of the old AI)
+- One more wagon is added to a train if the engine has only one unit
+- Combined passenger/mail trains, no more pure mail trains
+- Minor bugfixes
+
+alpha4.1
+- A little bugfix
+
+alpha4
+- Correcting the rail line if the AI gets interrupted while building
+- Basic money handling, paying loan back
+- Support for other railtypes, electrifying existing lines
+- Detection of "Disable trains/roadvehicles for computer" under Advanced Settings
+- Bugfixes
+
+alpha3
+- Train support (single point-to-point routes so far)
+- Added settings to use trains or road vehicles only
+
+alpha2
+- Added setting to configure the chance of going for a subsidy
+- Added setting to configure competition level based on the last month transported percentage
+- Basic event handling
+- Selling unprofitable vehicles and deleting empty routes
+- Refitting road vehicles
+
+alpha1
+- Basic version, road vehicles only

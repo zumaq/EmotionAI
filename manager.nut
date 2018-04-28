@@ -1,0 +1,734 @@
+class cManager
+{
+		root = null; // Reference to the main SimpleAI instance
+		todepotlist = null; // A list of vehicles heading for the depot
+		eventqueue = null; // Used for loading the event queue from a savegame
+
+		constructor(that) {
+			root = that;
+			todepotlist = AIList();
+			eventqueue = [];
+		}
+}
+
+/**
+ * Checks and handles events waiting in the event queue.
+ */
+function cManager::CheckEvents()
+{
+	local event = null;
+	local loadedevent = [];
+	local isloaded = null;
+	local eventtype = null;
+	while (eventqueue.len() > 0 || AIEventController.IsEventWaiting()) {
+		if (eventqueue.len() > 0) {
+			// Load an event from a savegame
+			loadedevent = eventqueue.pop();
+			eventtype = loadedevent[0];
+			isloaded = true;
+		} else {
+			// Load events if there are no more events from the savegame
+			event = AIEventController.GetNextEvent();
+			eventtype = event.GetEventType();
+			isloaded = false;
+		}
+		switch (eventtype) {
+			case AIEvent.ET_SUBSIDY_AWARDED:
+				// Just produce some log output if the subsidy is awarded to our company
+				event = AIEventSubsidyAwarded.Convert(event);
+				local sub = event.GetSubsidyID();
+				if (AICompany.IsMine(AISubsidy.GetAwardedTo(sub))) {
+					local srcname = null, dstname = null;
+					if (AISubsidy.GetSourceType(sub) == AISubsidy.SPT_TOWN) {
+						srcname = AITown.GetName(AISubsidy.GetSourceIndex(sub));
+					} else {
+						srcname = AIIndustry.GetName(AISubsidy.GetSourceIndex(sub));
+					}
+					if (AISubsidy.GetDestinationType(sub) == AISubsidy.SPT_TOWN) {
+						dstname = AITown.GetName(AISubsidy.GetDestinationIndex(sub));
+					} else {
+						dstname = AIIndustry.GetName(AISubsidy.GetDestinationIndex(sub));
+					}
+
+					local crgname = AICargo.GetCargoLabel(AISubsidy.GetCargoType(sub));
+					AILog.Info("I got the subsidy: " + crgname + " from " + srcname + " to " + dstname);
+				}
+				break;
+
+			case AIEvent.ET_ENGINE_PREVIEW:
+				// Accept the preview if possible
+				event = AIEventEnginePreview.Convert(event);
+				if (event.AcceptPreview()) AILog.Info("New engine available for preview: " + event.GetName());
+				break;
+
+			case AIEvent.ET_ENGINE_AVAILABLE:
+				// Produce some log output
+				event = AIEventEngineAvailable.Convert(event);
+				local engine = event.GetEngineID();
+				AILog.Info("New engine available: " + AIEngine.GetName(engine));
+				break;
+
+			case AIEvent.ET_COMPANY_NEW:
+				// Welcome the new company
+				event = AIEventCompanyNew.Convert(event);
+				local company = event.GetCompanyID();
+				AILog.Info("Welcome " + AICompany.GetName(company));
+				break;
+
+			case AIEvent.ET_COMPANY_IN_TROUBLE:
+				// Some more serious action is needed, currently it is only logged
+				event = AIEventCompanyInTrouble.Convert(event);
+				local company = event.GetCompanyID();
+				if (AICompany.IsMine(company)) AILog.Error("I'm in trouble, I don't know what to do!");
+				break;
+
+			case AIEvent.ET_VEHICLE_CRASHED:
+				// Clone the crashed vehicle if it still exists
+				local vehicle = null;
+				if (isloaded) {
+					vehicle = loadedevent[1];
+				} else {
+					event = AIEventVehicleCrashed.Convert(event);
+					vehicle = event.GetVehicleID();
+				}
+				AILog.Info("One of my vehicles has crashed.");
+				// Remove it from the todepotlist if it's there. It might be another vehicle, but that's not a big problem
+				if (todepotlist.HasItem(vehicle)) todepotlist.RemoveItem(vehicle);
+				// Check if it still exists
+				if (!AIVehicle.IsValidVehicle(vehicle)) break;
+				// Check if it is still the same vehicle
+				if (AIVehicle.GetState(vehicle) != AIVehicle.VS_CRASHED) break;
+				local group = AIVehicle.GetGroupID(vehicle);
+				if (!root.groups.HasItem(group)) break;
+				local route = root.groups.GetValue(group);
+				local newveh = AIVehicle.CloneVehicle(root.routes[route].homedepot, vehicle, true);
+				if (AIVehicle.IsValidVehicle(newveh)) {
+					AIVehicle.StartStopVehicle(newveh);
+					AILog.Info("Cloned the crashed vehicle.");
+				}
+				break;
+
+			case AIEvent.ET_VEHICLE_LOST:
+				// No action taken, only logged
+				event = AIEventVehicleLost.Convert(event);
+				local vehicle = event.GetVehicleID();
+				AILog.Error(AIVehicle.GetName(vehicle) + " is lost, I don't know what to do with that!");
+				/* TODO: Handle it. */
+				break;
+
+			case AIEvent.ET_VEHICLE_UNPROFITABLE:
+				// Sell the unprofitable vehicle
+				local vehicle = null;
+				if (isloaded) {
+					vehicle = loadedevent[1];
+				} else {
+					event = AIEventVehicleUnprofitable.Convert(event);
+					vehicle = event.GetVehicleID();
+				}
+				AILog.Info(AIVehicle.GetName(vehicle) + " is unprofitable, sending it to the depot...");
+				if (!AIVehicle.SendVehicleToDepot(vehicle)) {
+					// Maybe the vehicle needs to be reversed to find a depot
+					AIVehicle.ReverseVehicle(vehicle);
+					AIController.Sleep(75);
+					if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
+				}
+				todepotlist.AddItem(vehicle, SimpleAI.TD_SELL);
+				break;
+
+			case AIEvent.ET_VEHICLE_WAITING_IN_DEPOT:
+				local vehicle = null;
+				if (isloaded) {
+					vehicle = loadedevent[1];
+				} else {
+					event = AIEventVehicleWaitingInDepot.Convert(event);
+					vehicle = event.GetVehicleID();
+				}
+				if (todepotlist.HasItem(vehicle)) {
+					switch (todepotlist.GetValue(vehicle)) {
+						case SimpleAI.TD_SELL:
+							// Sell a vehicle because it is old or unprofitable
+							AILog.Info("Sold " + AIVehicle.GetName(vehicle) + ".");
+							if (AIVehicle.GetVehicleType(vehicle) == AIVehicle.VT_RAIL) {
+								AIVehicle.SellWagonChain(vehicle, 0);
+							} else {
+								AIVehicle.SellVehicle(vehicle);
+							}
+							todepotlist.RemoveItem(vehicle);
+							break;
+						case SimpleAI.TD_REPLACE:
+							// Replace an old vehicle with a newer model
+							cManager.ReplaceVehicle(vehicle);
+							break;
+						case SimpleAI.TD_ATTACH_WAGONS:
+							// Attach more wagons to an existing train, if we didn't have enough money to buy all wagons beforehand
+							cBuilder.AttachMoreWagons(vehicle);
+							AIVehicle.StartStopVehicle(vehicle);
+							todepotlist.RemoveItem(vehicle);
+							break;
+					}
+				} else {
+					// The vehicle is not in todepotlist
+					AILog.Info("I don't know why " + AIVehicle.GetName(vehicle) + " was sent to the depot, restarting it...");
+					AIVehicle.StartStopVehicle(vehicle);
+				}
+				break;
+
+			case AIEvent.ET_INDUSTRY_OPEN:
+				// Produce some log output
+				event = AIEventIndustryOpen.Convert(event);
+				local industry = event.GetIndustryID();
+				AILog.Info("New industry: " + AIIndustry.GetName(industry));
+				break;
+
+			case AIEvent.ET_INDUSTRY_CLOSE:
+				// Produce some log output
+				event = AIEventIndustryClose.Convert(event);
+				local industry = event.GetIndustryID();
+				if (!AIIndustry.IsValidIndustry(industry)) break;
+				AILog.Info("Closing industry: " + AIIndustry.GetName(industry));
+				/* TODO: Handle it.
+				   Currently no action is taken, the route will be removed later because all vehicles will be unprofitable */
+				break;
+
+			case AIEvent.ET_TOWN_FOUNDED:
+				// Produce some log output
+				event = AIEventTownFounded.Convert(event);
+				local town = event.GetTownID();
+				AILog.Info("New town founded: " + AITown.GetName(town));
+				break;
+		}
+	}
+}
+
+/**
+ * Converts list to array fro better handling.
+ */
+function cManager::ListToArray(list)
+{
+	local array = array(0);
+	for(local l = list.Begin(); !list.IsEnd(); l = list.Next()) {
+		array.push(l);
+	}
+	return array;
+}
+
+/**
+ * Checks all routes. Empty routes are removed, new vehicles are added if needed, old vehicles are replaced,
+ * vehicles are restarted if sitting in the depot for no reason, rails are electrified, short trains are lengthened.
+ */
+function cManager::CheckRoutes()
+{
+	foreach (idx, route in root.routes) {
+		switch (route.vehtype) {
+			case AIVehicle.VT_ROAD:
+				local vehicles = AIVehicleList_Group(route.group);
+
+				/* Empty route */
+				if (vehicles.Count() == 0) {
+					AILog.Info("Removing empty route: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+					route.vehtype = null;
+					root.groups.RemoveItem(route.group);
+					AIGroup.DeleteGroup(route.group);
+					root.serviced.RemoveItem(route.src * 256 + route.crg);
+					cBuilder.DeleteRoadStation(route.stasrc);
+					cBuilder.DeleteRoadStation(route.stadst);
+					break;
+				}
+
+				/* Adding vehicles */
+				if ((vehicles.Count() < route.maxvehicles) && (AIStation.GetCargoWaiting(route.stasrc, route.crg) > 150)) {
+					// Do not add new vehicles if there are unprofitable ones
+					vehicles.Valuate(AIVehicle.GetProfitThisYear);
+					if (vehicles.GetValue(vehicles.Begin()) <= 0) break;
+					// Only add new vehicles if the newest one is at least 3 months old
+					vehicles.Valuate(AIVehicle.GetAge);
+					vehicles.Sort(AIList.SORT_BY_VALUE, true);
+					if (vehicles.GetValue(vehicles.Begin()) > 90) {
+						local engine = cBuilder.ChooseRoadVeh(route.crg);
+						if (engine == null) break;
+						if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine))) {
+							if (cManager.AddVehicle(route, vehicles.Begin(), engine, null)) {
+								AILog.Info("Added road vehicle to route: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+							}
+						}
+					}
+				}
+
+				local startStation = AIStation.GetLocation(route.stasrc);
+				local endStation = AIStation.GetLocation(route.stadst);
+				/* Check Vehicle Blockade on Path */
+				root.players.CheckVehicles(startStation, endStation, this.ListToArray(vehicles));
+
+				/* Check for depo tyles blocked */
+				route.homedepot = root.players.CheckForDepoTileBlockade(route.homedepot);
+
+				/* Check industry or tonw stations*/
+				if ((AICargo.GetTownEffect(route.crg) == AICargo.TE_MAIL)||(AICargo.GetTownEffect(route.crg) == AICargo.TE_PASSENGERS)){
+					root.players.CheckForOtherTownStations(startStation, endStation);
+				} else {
+					root.players.CheckForOtherIndustryStations(startStation);
+					root.players.CheckForOtherIndustryStations(endStation);
+				}
+
+				/* Check for destroyed blockades */
+				root.players.CheckForDestroyedBlockades();
+
+				/* Check for destroyed stations */
+				root.players.CheckForDestroyedStationTiles();
+
+				/* Replacing old vehicles */
+				vehicles.Valuate(AIVehicle.GetAgeLeft);
+				vehicles.KeepBelowValue(0);
+				foreach (vehicle, dummy in vehicles) {
+					if (todepotlist.HasItem(vehicle)) continue;
+					local engine = cBuilder.ChooseRoadVeh(route.crg);
+					if (engine == null) continue;
+					if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine))) {
+						AILog.Info(AIVehicle.GetName(vehicle) + " is getting old, sending it to the depot...");
+						if (!AIVehicle.SendVehicleToDepot(vehicle)) {
+							// Maybe the vehicle needs to be reversed to find a depot
+							AIVehicle.ReverseVehicle(vehicle);
+							AIController.Sleep(75);
+							if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
+						}
+						todepotlist.AddItem(vehicle, SimpleAI.TD_REPLACE);
+					}
+				}
+
+				/* Checking vehicles in depot */
+				vehicles = AIVehicleList_Group(route.group);
+				vehicles.Valuate(AIVehicle.IsStoppedInDepot);
+				vehicles.KeepValue(1);
+				foreach (vehicle, dummy in vehicles) {
+					// A vehicle has probably been sitting there for ages if its current year/last year profits are both 0, and it's at least 2 months old
+					if (AIVehicle.GetProfitThisYear(vehicle) != 0 || AIVehicle.GetProfitLastYear(vehicle) != 0 || AIVehicle.GetAge(vehicle) < 60) continue;
+					if (todepotlist.HasItem(vehicle)) {
+						todepotlist.RemoveItem(vehicle);
+						AIVehicle.StartStopVehicle(vehicle);
+					} else {
+						// Sell it if we have no idea how it got there
+						AILog.Warning("Sold " + AIVehicle.GetName(vehicle) + ", as it has been sitting in the depot for ages.");
+						AIVehicle.SellVehicle(vehicle);
+					}
+				}
+
+				break;
+			case AIVehicle.VT_RAIL:
+				local vehicles = AIVehicleList_Group(route.group);
+
+				/* Empty route */
+				if (vehicles.Count() == 0) {
+					AILog.Info("Removing empty route: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+					route.vehtype = null;
+					root.groups.RemoveItem(route.group);
+					AIGroup.DeleteGroup(route.group);
+					root.serviced.RemoveItem(route.src * 256 + route.crg);
+					// A builder instance is needed to call DeleteRailStation
+					local builder = cBuilder(root);
+					// Connected rails will automatically be removed
+					builder.DeleteRailStation(route.stasrc);
+					builder.DeleteRailStation(route.stadst);
+					builder = null;
+					break;
+				}
+
+				/* Electrifying rails */
+				if ((AIRail.TrainHasPowerOnRail(route.railtype, AIRail.GetCurrentRailType())) && (route.railtype != AIRail.GetCurrentRailType())) {
+					// Check if we can afford it
+					if (Banker.GetMaxBankBalance() > Banker.InflatedValue(30000)) {
+						if (AICompany.GetBankBalance(AICompany.COMPANY_SELF) < Banker.InflatedValue(30000)) {
+							Banker.SetMinimumBankBalance(Banker.InflatedValue(30000));
+						}
+						AILog.Info("Electrifying rail line: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+						// A builder instance is needed to call ElectrifyRail
+						local builder = cBuilder(root);
+						route.railtype = AIRail.GetCurrentRailType();
+						builder.ElectrifyRail(AIStation.GetLocation(route.stasrc));
+						builder = null;
+					}
+				}
+
+				/* Adding trains */
+				if (vehicles.Count() == 1 && route.maxvehicles == 2) {
+					if (AIVehicle.GetProfitThisYear(vehicles.Begin()) <= 0) break;
+					if (AIStation.GetCargoWaiting(route.stasrc, route.crg) > 150) {
+						local railtype = AIRail.GetCurrentRailType();
+						AIRail.SetCurrentRailType(route.railtype);
+						local wagon = cBuilder.ChooseWagon(route.crg, root.engineblacklist);
+						if (wagon == null) {
+							AIRail.SetCurrentRailType(railtype);
+							return false;
+						}
+						local platform = cBuilder.GetRailStationPlatformLength(route.stasrc);
+						local engine = cBuilder.ChooseTrainEngine(route.crg, AIMap.DistanceManhattan(AIStation.GetLocation(route.stasrc), AIStation.GetLocation(route.stadst)), wagon, platform * 2 - 1, root.engineblacklist);
+						if (engine == null) {
+							AIRail.SetCurrentRailType(railtype);
+							return false;
+						}
+						// Check if we can afford it
+						if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine) + 4 * AIEngine.GetPrice(wagon))) {
+							if (cManager.AddVehicle(route, vehicles.Begin(), engine, wagon)) {
+								AILog.Info("Added train to route: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+							}
+						}
+						AIRail.SetCurrentRailType(railtype);
+					}
+				}
+
+				/* Replacing old vehicles */
+				vehicles.Valuate(AIVehicle.GetAgeLeft);
+				vehicles.KeepBelowValue(0);
+				foreach (vehicle, dummy in vehicles) {
+					if (todepotlist.HasItem(vehicle)) continue;
+					local railtype = AIRail.GetCurrentRailType();
+					// Choose a new model
+					AIRail.SetCurrentRailType(route.railtype);
+					local wagon = cBuilder.ChooseWagon(route.crg, root.engineblacklist);
+					if (wagon == null) continue;
+					local platform = cBuilder.GetRailStationPlatformLength(route.stasrc);
+					local engine = cBuilder.ChooseTrainEngine(route.crg, AIMap.DistanceManhattan(AIStation.GetLocation(route.stasrc), AIStation.GetLocation(route.stadst)), wagon, platform * 2 - 1, root.engineblacklist);
+					AIRail.SetCurrentRailType(railtype);
+					if (engine == null) continue;
+					// Replace it only if we can afford it
+					if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine) + 5 * AIEngine.GetPrice(wagon))) {
+						AILog.Info(AIVehicle.GetName(vehicle) + " is getting old, sending it to the depot...");
+						if (!AIVehicle.SendVehicleToDepot(vehicle)) {
+							// Maybe the train only needs to be reversed to find a depot
+							AIVehicle.ReverseVehicle(vehicle);
+							AIController.Sleep(75);
+							if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
+						}
+						todepotlist.AddItem(vehicle, SimpleAI.TD_REPLACE);
+					}
+				}
+
+				/* Lengthening short trains */
+				vehicles = AIVehicleList_Group(route.group);
+				local platform = cBuilder.GetRailStationPlatformLength(route.stasrc);
+				foreach (train, dummy in vehicles) {
+					if (todepotlist.HasItem(train)) continue;
+					// The train should fill its platform
+					if (AIVehicle.GetLength(train) < platform * 16 - 7) {
+						local railtype = AIRail.GetCurrentRailType();
+						AIRail.SetCurrentRailType(route.railtype);
+						local wagon = cBuilder.ChooseWagon(route.crg, root.engineblacklist);
+						if (wagon == null) break;
+						// Check if we can afford it
+						if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + 5 * AIEngine.GetPrice(wagon))) {
+							AILog.Info(AIVehicle.GetName(train) + " is short, sending it to the depot to attach more wagons...");
+							if (!AIVehicle.SendVehicleToDepot(train)) {
+								AIVehicle.ReverseVehicle(train);
+								AIController.Sleep(75);
+								if (!AIVehicle.SendVehicleToDepot(train)) break;
+							}
+							todepotlist.AddItem(train, SimpleAI.TD_ATTACH_WAGONS);
+						}
+						AIRail.SetCurrentRailType(railtype);
+					}
+				}
+
+				/* Checking vehicles in depot */
+				vehicles = AIVehicleList_Group(route.group);
+				vehicles.Valuate(AIVehicle.IsStoppedInDepot);
+				vehicles.KeepValue(1);
+				foreach (vehicle, dummy in vehicles) {
+					// A vehicle has probably been sitting there for ages if its current year/last year profits are both 0, and it's at least 2 months old
+					if (AIVehicle.GetProfitThisYear(vehicle) != 0 || AIVehicle.GetProfitLastYear(vehicle) != 0 || AIVehicle.GetAge(vehicle) < 60) continue;
+					if (todepotlist.HasItem(vehicle)) {
+						todepotlist.RemoveItem(vehicle);
+						AIVehicle.StartStopVehicle(vehicle);
+					} else {
+						// Sell it if we have no idea how it got there
+						AILog.Warning("Sold " + AIVehicle.GetName(vehicle) + ", as it has been sitting in the depot for ages.");
+						AIVehicle.SellWagonChain(vehicle, 0);
+					}
+				}
+
+				break;
+
+			case AIVehicle.VT_AIR:
+				local vehicles = AIVehicleList_Group(route.group);
+				local srctype = AIAirport.GetAirportType(AIStation.GetLocation(route.stasrc));
+				local dsttype = AIAirport.GetAirportType(AIStation.GetLocation(route.stadst));
+				local is_small = cBuilder.IsSmallAirport(srctype) || cBuilder.IsSmallAirport(dsttype);
+
+				/* Empty route */
+				if (vehicles.Count() == 0) {
+					AILog.Info("Removing empty route: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+					route.vehtype = null;
+					root.groups.RemoveItem(route.group);
+					AIGroup.DeleteGroup(route.group);
+					root.serviced.RemoveItem(route.src * 256 + route.crg);
+					// DeleteAirport will only delete the airports if they are unused
+					cBuilder.DeleteAirport(route.stasrc);
+					cBuilder.DeleteAirport(route.stadst);
+					break;
+				}
+
+				/* Adding vehicles */
+				local canaddplane = true;
+				if (cBuilder.GetAirportTypeCapacity(srctype) <= AIVehicleList_Station(route.stasrc).Count()) canaddplane = false;
+				if (cBuilder.GetAirportTypeCapacity(dsttype) <= AIVehicleList_Station(route.stadst).Count()) canaddplane = false;
+				// Only add planes if there is some free capacity at both airports
+				if (canaddplane && (AIStation.GetCargoWaiting(route.stasrc, route.crg) > 200)) {
+					// Do not add new planes if there are unprofitable ones
+					vehicles.Valuate(AIVehicle.GetProfitThisYear);
+					if (vehicles.GetValue(vehicles.Begin()) <= 0) break;
+					// Only add new planes if the newest one is at least 3 months old
+					vehicles.Valuate(AIVehicle.GetAge);
+					vehicles.Sort(AIList.SORT_BY_VALUE, true);
+					if (vehicles.GetValue(vehicles.Begin()) > 90) {
+						local engine = cBuilder.ChoosePlane(route.crg, is_small, AIOrder.GetOrderDistance(AIVehicle.VT_AIR, AIStation.GetLocation(route.stasrc), AIStation.GetLocation(route.stadst)), false);
+						if (engine == null) break;
+						// Check if we can afford it
+						if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine))) {
+							if (cManager.AddVehicle(route, vehicles.Begin(), engine, null)) {
+								AILog.Info("Added plane to route: " + AIStation.GetName(route.stasrc) + " - " + AIStation.GetName(route.stadst));
+							}
+						}
+					}
+				}
+
+				/* Replacing old vehicles */
+				vehicles.Valuate(AIVehicle.GetAgeLeft);
+				vehicles.KeepBelowValue(0);
+				foreach (vehicle, dummy in vehicles) {
+					if (todepotlist.HasItem(vehicle)) continue;
+					// Choose a new model
+					local engine = cBuilder.ChoosePlane(route.crg, is_small, AIOrder.GetOrderDistance(AIVehicle.VT_AIR, AIStation.GetLocation(route.stasrc), AIStation.GetLocation(route.stadst)), false);
+					if (engine == null) continue;
+					// Check if we can afford it
+					if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine))) {
+						AILog.Info(AIVehicle.GetName(vehicle) + " is getting old, sending it to the hangar...");
+						if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
+						todepotlist.AddItem(vehicle, SimpleAI.TD_REPLACE);
+					}
+				}
+
+				/* Checking vehicles in depot */
+				vehicles = AIVehicleList_Group(route.group);
+				vehicles.Valuate(AIVehicle.IsStoppedInDepot);
+				vehicles.KeepValue(1);
+				foreach (vehicle, dummy in vehicles) {
+					// A vehicle has probably been sitting there for ages if its current year/last year profits are both 0, and it's at least 2 months old
+					if (AIVehicle.GetProfitThisYear(vehicle) != 0 || AIVehicle.GetProfitLastYear(vehicle) != 0 || AIVehicle.GetAge(vehicle) < 60) continue;
+					if (todepotlist.HasItem(vehicle)) {
+						todepotlist.RemoveItem(vehicle);
+						AIVehicle.StartStopVehicle(vehicle);
+					} else {
+						// Sell it if we have no idea how it got there
+						AILog.Warning("Sold " + AIVehicle.GetName(vehicle) + ", as it has been sitting in the depot for ages.");
+						AIVehicle.SellVehicle(vehicle);
+					}
+				}
+				break;
+		}
+	}
+	// Check ugrouped vehicles as well. There should be none after all...
+	cManager.CheckDefaultGroup();
+}
+
+/**
+ * Adds a new vehicle to an existing route. All vehicle types are supported.
+ * @param route The route to which the new vehicle will be added.
+ * @param mainvehicle An already existing vehicle on the route to share orders with.
+ * @param engine The EngineID of the new vehicle. In case of trains it is the EngineID of the locomotive.
+ * @param wagon The EngineID of the train wagons. This parameter is unused in case of road vehicles and aircraft.
+ * @return True if the action succeeded.
+ */
+function cManager::AddVehicle(route, mainvehicle, engine, wagon)
+{
+	// A builder instance is needed to add a new vehicle
+	local builder = cBuilder(root);
+	builder.crg = route.crg;
+	builder.stasrc = route.stasrc;
+	builder.stadst = route.stadst;
+	builder.group = route.group;
+	builder.homedepot = route.homedepot;
+	switch (route.vehtype) {
+		case AIVehicle.VT_RAIL:
+			local trains = AIVehicleList();
+			trains.Valuate(AIVehicle.GetVehicleType);
+			trains.KeepValue(AIVehicle.VT_RAIL);
+			// Do not try to add one if we have already reached the train limit
+			if (trains.Count() + 1 > AIGameSettings.GetValue("vehicle.max_trains")) return false;
+			local length = cBuilder.GetRailStationPlatformLength(builder.stasrc) * 2 - 2;
+			if (builder.BuildAndStartTrains(1, length, engine, wagon, mainvehicle)) {
+				builder = null;
+				return true;
+			} else {
+				builder = null;
+				return false;
+			}
+			break;
+
+		case AIVehicle.VT_ROAD:
+			local roadvehicles = AIVehicleList();
+			roadvehicles.Valuate(AIVehicle.GetVehicleType);
+			roadvehicles.KeepValue(AIVehicle.VT_ROAD);
+			// Do not try to add one if we have already reached the road vehicle limit
+			if (roadvehicles.Count() + 1 > AIGameSettings.GetValue("vehicle.max_roadveh")) return false;
+			if (builder.BuildAndStartVehicles(engine, 1, mainvehicle)) {
+				builder = null;
+				return true;
+			} else {
+				builder = null;
+				return false;
+			}
+			break;
+
+		case AIVehicle.VT_AIR:
+			local planes = AIVehicleList();
+			planes.Valuate(AIVehicle.GetVehicleType);
+			planes.KeepValue(AIVehicle.VT_AIR);
+			// Do not try to add one if we have already reached the aircraft limit
+			if (planes.Count() + 1 > AIGameSettings.GetValue("vehicle.max_aircraft")) return false;
+			// The function originally written for road vehicles is used here
+			if (builder.BuildAndStartVehicles(engine, 1, mainvehicle)) {
+				builder = null;
+				return true;
+			} else {
+				builder = null;
+				return false;
+			}
+			break;
+	}
+}
+
+/**
+ * Replaces an old vehicle with a newer model if it is already in the depot.
+ * @param vehicle The vehicle to be replaced.
+ */
+function cManager::ReplaceVehicle(vehicle)
+{
+	local group = AIVehicle.GetGroupID(vehicle);
+	local route = root.routes[root.groups.GetValue(group)];
+	local engine = null;
+	local wagon = null;
+	local railtype = AIRail.GetCurrentRailType();
+	local vehtype = AIVehicle.GetVehicleType(vehicle);
+	// Choose a new engine
+	switch (vehtype) {
+		case AIVehicle.VT_RAIL:
+			AIRail.SetCurrentRailType(route.railtype);
+			wagon = cBuilder.ChooseWagon(route.crg, root.engineblacklist);
+			if (wagon != null) {
+				local platform = cBuilder.GetRailStationPlatformLength(route.stasrc);
+				engine = cBuilder.ChooseTrainEngine(route.crg, AIMap.DistanceManhattan(AIStation.GetLocation(route.stasrc), AIStation.GetLocation(route.stadst)), wagon, platform * 2 - 1, root.engineblacklist);
+			}
+			break;
+		case AIVehicle.VT_ROAD:
+			engine = cBuilder.ChooseRoadVeh(route.crg);
+			break;
+		case AIVehicle.VT_AIR:
+			local srctype = AIAirport.GetAirportType(AIStation.GetLocation(route.stasrc));
+			local dsttype = AIAirport.GetAirportType(AIStation.GetLocation(route.stadst));
+			local is_small = cBuilder.IsSmallAirport(srctype) || cBuilder.IsSmallAirport(dsttype);
+			engine = cBuilder.ChoosePlane(route.crg, is_small, AIOrder.GetOrderDistance(AIVehicle.VT_AIR, AIStation.GetLocation(route.stasrc), AIStation.GetLocation(route.stadst)), false);
+			break;
+	}
+	local vehicles = AIVehicleList_Group(group);
+	local ordervehicle = null;
+	// Choose a vehicle to share orders with
+	foreach (nextveh, dummy in vehicles) {
+		ordervehicle = nextveh;
+		// Don't share orders with the vehicle which will be sold
+		if (nextveh != vehicle)	break;
+	}
+	if (ordervehicle == vehicle) ordervehicle = null;
+	if (AIVehicle.GetVehicleType(vehicle) == AIVehicle.VT_RAIL) {
+		if (engine != null && wagon != null && (Banker.GetMaxBankBalance() > AIEngine.GetPrice(engine) + 5 * AIEngine.GetPrice(wagon))) {
+			// Sell the train
+			AIVehicle.SellWagonChain(vehicle, 0);
+			cManager.AddVehicle(route, ordervehicle, engine, wagon);
+		} else {
+			// Restart the train if we cannot afford to replace it
+			AIVehicle.StartStopVehicle(vehicle);
+		}
+		// Restore the previous railtype
+		AIRail.SetCurrentRailType(railtype);
+	} else {
+		if (engine != null && (Banker.GetMaxBankBalance() > AIEngine.GetPrice(engine))) {
+			AIVehicle.SellVehicle(vehicle);
+			cManager.AddVehicle(route, ordervehicle, engine, null);
+		} else {
+			AIVehicle.StartStopVehicle(vehicle);
+		}
+	}
+	todepotlist.RemoveItem(vehicle);
+}
+
+/**
+ * Checks ungrouped vehicles. Under normal conditions all vehicles should be grouped.
+ */
+function cManager::CheckDefaultGroup()
+{
+	local vehtypes = [AIVehicle.VT_ROAD, AIVehicle.VT_RAIL, AIVehicle.VT_AIR];
+	for (local x = 0; x < 3; x++) {
+		// The same algorithm is used for all three vehicle types
+		local vehicles = AIVehicleList_DefaultGroup(vehtypes[x]);
+		vehicles.Valuate(AIVehicle.IsStoppedInDepot);
+		vehicles.KeepValue(1);
+		foreach (vehicle, dummy in vehicles) {
+			// Check for vehicles sitting in the depot.
+			if (AIVehicle.GetProfitThisYear(vehicle) != 0 || AIVehicle.GetProfitLastYear(vehicle) != 0 || AIVehicle.GetAge(vehicle) < 60) continue;
+			if (todepotlist.HasItem(vehicle)) {
+				todepotlist.RemoveItem(vehicle);
+				AIVehicle.StartStopVehicle(vehicle);
+			} else {
+				AILog.Warning("Sold " + AIVehicle.GetName(vehicle) + ", as it has been sitting in the depot for ages.");
+				if (vehtypes[x] == AIVehicle.VT_RAIL) {
+					AIVehicle.SellWagonChain(vehicle, 0);
+				} else {
+					AIVehicle.SellVehicle(vehicle);
+				}
+			}
+		}
+	}
+}
+
+/**
+ * Check vehicles in the todepotlist if they're actually heading for a depot.
+ */
+function cManager::CheckTodepotlist()
+{
+	// This is needed so as not to modify the todepotlist while iterating through it
+	local itemstoremove = [];
+	foreach (vehicle, dummy in todepotlist) {
+		// Obviously shouldn't be there if it's not even valid
+		if (!AIVehicle.IsValidVehicle(vehicle)) {
+			AILog.Warning("There was an invalid vehicle in the todpeotlist.");
+			itemstoremove.push(vehicle);
+			continue;
+		}
+		// Everything is OK if it has already reached the depot
+		if (AIVehicle.IsStoppedInDepot(vehicle)) continue;
+		// Check its destination
+		local vehicle_destination = AIOrder.GetOrderDestination(vehicle, AIOrder.ORDER_CURRENT);
+		switch (AIVehicle.GetVehicleType(vehicle)) {
+			case AIVehicle.VT_ROAD:
+				if (!AIRoad.IsRoadDepotTile(vehicle_destination)) {
+					itemstoremove.push(vehicle);
+					AILog.Warning(AIVehicle.GetName(vehicle) + " is not heading for a depot although it is listed in the todepotlist.");
+				}
+				break;
+
+			case AIVehicle.VT_RAIL:
+				if (!AIRail.IsRailDepotTile(vehicle_destination)) {
+					itemstoremove.push(vehicle);
+					AILog.Warning(AIVehicle.GetName(vehicle) + " is not heading for a depot although it is listed in the todepotlist.");
+				}
+				break;
+
+			case AIVehicle.VT_AIR:
+				if (!AIAirport.IsHangarTile(vehicle_destination)) {
+					itemstoremove.push(vehicle);
+					AILog.Warning(AIVehicle.GetName(vehicle) + " is not heading for a hangar although it is listed in the todepotlist.");
+				}
+				break;
+		}
+	}
+	foreach (item in itemstoremove) {
+		todepotlist.RemoveItem(item);
+	}
+}
