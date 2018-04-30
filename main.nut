@@ -114,6 +114,7 @@ function SimpleAI::Start()
 		inauguration = AIDate.GetYear(AIDate.GetCurrentDate());
 		bridgesupgraded = AIDate.GetYear(AIDate.GetCurrentDate());
 	}
+	this.players.AssignTowns();
 	// The main loop of the AI
 	while(true) {
 		this.SetRailType();
@@ -136,6 +137,8 @@ function SimpleAI::Start()
 		manager.CheckRoutes();
 		if (AIDate.GetYear(AIDate.GetCurrentDate()) > bridgesupgraded) this.UpgradeBridges();
 		Banker.PayLoan();
+		if (this.GetTick() % 500 == 0) this.players.AddKarmaPointsToAll();
+		if (this.GetTick() % 400 == 0) this.players.PunishPlayersByKarmaPoints();
 		AIController.Sleep(10);
 	}
 }
