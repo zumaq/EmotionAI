@@ -1,3 +1,9 @@
+/*
+ * @author Brumi (SimpleAI) Copyright (C) 2017, modified by Michal Zopp
+ * @file main.nut
+ * @note original licence can be found in licence.txt
+ */
+
 import("pathfinder.road", "RoadPathFinder", 4);
 import("pathfinder.rail", "RailPathFinder", 1);
 

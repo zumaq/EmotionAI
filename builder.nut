@@ -1,3 +1,9 @@
+/*
+ * @author Brumi (SimpleAI) Copyright (C) 2017, modified by Michal Zopp
+ * @file builder.nut
+ * @note original licence can be found in licence.txt
+ */
+
 class cBuilder
 {
 		DIR_NE = 2;

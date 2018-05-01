@@ -1,3 +1,9 @@
+/*
+ * @author Brumi (SimpleAI) Copyright (C) 2017
+ * @file pathfinder.nut
+ * @note original licence can be found in licence.txt
+ */
+
 class MyRoadPF extends RoadPathFinder
 {
 		_cost_level_crossing = null;
@@ -72,4 +78,3 @@ function MyRailPF::_Cost(path, new_tile, new_direction, self)
 	if (AITile.HasTransportType(new_tile, AITile.TRANSPORT_ROAD)) cost += self._cost_level_crossing;
 	return cost;
 }
-

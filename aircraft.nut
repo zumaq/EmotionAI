@@ -1,3 +1,9 @@
+/*
+ * @author Brumi (SimpleAI) Copyright (C) 2017
+ * @file aircraft.nut
+ * @note original licence can be found in licence.txt
+ */
+
 /**
  * Determines whether to use aircraft or not. This is done before selecting a route.
  * @return True if aircraft will be used.

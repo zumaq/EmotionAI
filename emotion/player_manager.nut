@@ -1,6 +1,7 @@
 /**
  * @author Michal Zopp
  * @file player_manager.nut
+ * @note original licence can be found in licence.txt
  */
 
 require("player.nut");
@@ -493,7 +494,7 @@ function PlayerManager::CheckForOtherIndustryStations(stationTile){
 		tileArray.extend(this.CheckAndPunishStations(industries[i])); //test this
 	}
   for (local i=0; i<tileArray.len(); i++){
-    local owner = AITile.GetOwner(stationTiles[i]);
+    local owner = AITile.GetOwner(stationTile[i]);
     if (this._player_list[i].IsStationTileSet(tileArray[i]) == false){
       this.CheckTileAndOwner(owner, tileArray[i]);
       this._player_list[owner]._station_tiles.push(tileArray[i]);

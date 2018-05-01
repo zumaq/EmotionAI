@@ -1,6 +1,7 @@
 /**
  * @author Michal Zopp
  * @file towns.nut
+ * @note original licence can be found in licence.txt
  */
 
  /**

@@ -1,3 +1,9 @@
+/*
+ * @author Brumi (SimpleAI) Copyright (C) 2017, modified by Michal Zopp
+ * @file railbuilder.nut
+ * @note original licence can be found in licence.txt
+ */
+
 /**
  * Build a single (one-lane) rail station at a town or an industry.
  * Builder class variables used: crg, src, dst, srcplace, dstplace, srcistown, dstistown,

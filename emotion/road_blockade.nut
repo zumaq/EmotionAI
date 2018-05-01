@@ -1,6 +1,7 @@
 /**
 * @author Michal Zopp
 * @file road_blockades.nut
+* @note original licence can be found in licence.txt
 */
 
 /**

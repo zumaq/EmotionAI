@@ -1,8 +1,14 @@
+/*
+ * @author Brumi (SimpleAI) Copyright (C) 2017, modified by Michal Zopp
+ * @file info.nut
+ * @note original licence can be found in licence.txt
+ */
+
  class EmotionAI extends AIInfo
  {
    function GetAuthor()        { return "Michal Zopp"; }
    function GetName()          { return "EmotionAI"; }
-   function GetDescription()   { return "An AI which tries counter other players."; }
+   function GetDescription()   { return "An AI which tries counter bad actions from other players."; }
    function GetVersion()       { return 1; }
    function MinVersionToLoad() { return 1; }
    function GetDate()          { return "2018-03-15"; }

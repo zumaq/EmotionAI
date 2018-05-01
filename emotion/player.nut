@@ -1,6 +1,7 @@
 /**
  * @author Michal Zopp
  * @file player.nut
+ * @note original licence can be found in licence.txt
  */
 
 require("towns.nut");
