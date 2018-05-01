@@ -1,13 +1,13 @@
- class SimpleAI extends AIInfo
+ class EmotionAI extends AIInfo
  {
-   function GetAuthor()        { return "Brumi"; }
-   function GetName()          { return "SimpleAI"; }
-   function GetDescription()   { return "An AI which tries to imitate the old AI."; }
-   function GetVersion()       { return 12; }
+   function GetAuthor()        { return "Michal Zopp"; }
+   function GetName()          { return "EmotionAI"; }
+   function GetDescription()   { return "An AI which tries counter other players."; }
+   function GetVersion()       { return 1; }
    function MinVersionToLoad() { return 1; }
-   function GetDate()          { return "2017-05-10"; }
-   function CreateInstance()   { return "SimpleAI"; }
-   function GetShortName()     { return "SMPL"; }
+   function GetDate()          { return "2018-03-15"; }
+   function CreateInstance()   { return "EmotionAI"; }
+   function GetShortName()     { return "EMTI"; }
    function GetAPIVersion()    { return "1.2"; }
 
    function GetSettings() {
@@ -148,4 +148,4 @@
    }
  }
 
- RegisterAI(SimpleAI());
+ RegisterAI(EmotionAI());

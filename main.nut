@@ -11,7 +11,7 @@ require("Terraform.nut");
 require("setcompanyname.nut");
 require("emotion/player_manager.nut");
 
-class SimpleAI extends AIController
+class EmotionAI extends AIController
 {
 		// Building stages, needed to recover a savegame
 		BS_NOTHING = 0;
@@ -76,9 +76,9 @@ class SimpleAI extends AIController
 /**
  * The main function of the AI.
  */
-function SimpleAI::Start()
+function EmotionAI::Start()
 {
-	AILog.Info("SimpleAI started.");
+	AILog.Info("EmotionAI started.");
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 	AICompany.SetAutoRenewStatus(false);
 	AILog.Info("Maximum transported percentage is " + AIController.GetSetting("max_transported") + "%");
@@ -146,14 +146,14 @@ function SimpleAI::Start()
 /**
  * The function called when stopping the AI.
  */
-function SimpleAI::Stop()
+function EmotionAI::Stop()
 {
 }
 
 /**
  * Saves the current state of the AI.
  */
-function SimpleAI::Save()
+function EmotionAI::Save()
 {
 	local table = {	lastroute = lastroute,
 									todepotlist = [],
@@ -175,14 +175,14 @@ function SimpleAI::Save()
 														 },
 									player_manager = null
 								};
-	table.todepotlist = SimpleAI.ListToArray(manager.todepotlist);
-	table.serviced = SimpleAI.ListToArray(serviced);
-	table.groups = SimpleAI.ListToArray(groups);
-	table.airports = SimpleAI.ListToArray(airports);
+	table.todepotlist = EmotionAI.ListToArray(manager.todepotlist);
+	table.serviced = EmotionAI.ListToArray(serviced);
+	table.groups = EmotionAI.ListToArray(groups);
+	table.airports = EmotionAI.ListToArray(airports);
 	table.eventqueue = this.SaveEventQueue();
-	table.roadbridges = SimpleAI.ListToArray(roadbridges);
-	table.railbridges = SimpleAI.ListToArray(railbridges);
-	table.engineblacklist = SimpleAI.ListToArray(engineblacklist);
+	table.roadbridges = EmotionAI.ListToArray(roadbridges);
+	table.railbridges = EmotionAI.ListToArray(railbridges);
+	table.engineblacklist = EmotionAI.ListToArray(engineblacklist);
 	table.buildingstage = buildingstage;
 	switch (buildingstage) {
 		case BS_BUILDING:
@@ -209,23 +209,23 @@ function SimpleAI::Save()
 /**
  * Loads the state of the AI from a savegame.
  */
-function SimpleAI::Load(version, data)
+function EmotionAI::Load(version, data)
 {
-	AILog.Info("Loading a saved game with SimpleAI.");
+	AILog.Info("Loading a saved game with EmotionAI.");
 	if ("lastroute" in data) lastroute = data.lastroute;
 	else lastroute = 0;
 	if ("routes" in data) routes = data.routes;
-	if ("todepotlist" in data) manager.todepotlist.AddList(SimpleAI.ArrayToList(data.todepotlist));
-	if ("serviced" in data) serviced.AddList(SimpleAI.ArrayToList(data.serviced));
-	if ("groups" in data) groups.AddList(SimpleAI.ArrayToList(data.groups));
-	if ("airports" in data) airports.AddList(SimpleAI.ArrayToList(data.airports));
+	if ("todepotlist" in data) manager.todepotlist.AddList(EmotionAI.ArrayToList(data.todepotlist));
+	if ("serviced" in data) serviced.AddList(EmotionAI.ArrayToList(data.serviced));
+	if ("groups" in data) groups.AddList(EmotionAI.ArrayToList(data.groups));
+	if ("airports" in data) airports.AddList(EmotionAI.ArrayToList(data.airports));
 	if ("inauguration" in data) inauguration = data.inauguration;
 	else inauguration = AIGameSettings.GetValue("game_creation.starting_year");
 	if ("eventqueue" in data) manager.eventqueue = data.eventqueue;
 	if ("bridgesupgraded" in data) bridgesupgraded = data.bridgesupgraded;
-	if ("roadbridges" in data) roadbridges.AddList(SimpleAI.ArrayToList(data.roadbridges));
-	if ("railbridges" in data) railbridges.AddList(SimpleAI.ArrayToList(data.railbridges));
-	if ("engineblacklist" in data) engineblacklist.AddList(SimpleAI.ArrayToList(data.engineblacklist));
+	if ("roadbridges" in data) roadbridges.AddList(EmotionAI.ArrayToList(data.roadbridges));
+	if ("railbridges" in data) railbridges.AddList(EmotionAI.ArrayToList(data.railbridges));
+	if ("engineblacklist" in data) engineblacklist.AddList(EmotionAI.ArrayToList(data.engineblacklist));
 	if ("buildingstage" in data) buildingstage = data.buildingstage;
 	if (data.rawin("player_manager")) players = PlayerManager.Load(data.rawget("player_manager"));
 	else buildingstage = BS_NOTHING;
@@ -241,7 +241,7 @@ function SimpleAI::Load(version, data)
  * @param istown Whether the HQ will be built in a town.
  * @return True if the construction succeeded.
  */
-function SimpleAI::BuildHQ(centre, istown)
+function EmotionAI::BuildHQ(centre, istown)
 {
 	local tilelist = null;
 	// Get a tile list
@@ -281,7 +281,7 @@ function SimpleAI::BuildHQ(centre, istown)
 /**
  * Sets the current rail type of the AI based on the maximum number of cargoes transportable.
  */
-function SimpleAI::SetRailType()
+function EmotionAI::SetRailType()
 {
 	local railtypes = AIRailTypeList();
 	local cargoes = AICargoList();
@@ -309,7 +309,7 @@ function SimpleAI::SetRailType()
 /**
  * Checks the game settings for the particular vehicle types.
  */
-function SimpleAI::CheckVehicleTypes()
+function EmotionAI::CheckVehicleTypes()
 {
 	if (AIController.GetSetting("use_roadvehs") && !AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_ROAD))
 		use_roadvehs = 1;
@@ -343,7 +343,7 @@ function SimpleAI::CheckVehicleTypes()
  * Gets the CargoID associated with mail.
  * @return The CargoID of mail.
  */
-function SimpleAI::GetMailCargo()
+function EmotionAI::GetMailCargo()
 {
 	local cargolist = AICargoList();
 	foreach (cargo, dummy in cargolist) {
@@ -356,7 +356,7 @@ function SimpleAI::GetMailCargo()
  * Gets the CargoAI associated with passengers.
  * @return The CargoID of passengers.
  */
-function SimpleAI::GetPassengersCargo()
+function EmotionAI::GetPassengersCargo()
 {
 	local cargolist = AICargoList();
 	foreach (cargo, dummy in cargolist) {
@@ -370,7 +370,7 @@ function SimpleAI::GetPassengersCargo()
  * @param list The AIList to be converted.
  * @return The converted array.
  */
-function SimpleAI::ListToArray(list)
+function EmotionAI::ListToArray(list)
 {
 	local array = [];
 	local templist = AIList();
@@ -388,7 +388,7 @@ function SimpleAI::ListToArray(list)
  * @param The array to be converted.
  * @return The converted AIList.
  */
-function SimpleAI::ArrayToList(array)
+function EmotionAI::ArrayToList(array)
 {
 	local list = AIList();
 	local temparray = [];
@@ -404,7 +404,7 @@ function SimpleAI::ArrayToList(array)
  * Saves the important elements of the event queue.
  * @return The event queue converted to an array which can be saved.
  */
-function SimpleAI::SaveEventQueue()
+function EmotionAI::SaveEventQueue()
 {
 	local array = manager.eventqueue;
 	while (AIEventController.IsEventWaiting()) {
@@ -442,7 +442,7 @@ function SimpleAI::SaveEventQueue()
  * Decides whether it is time to build a new route.
  * @return True if the waiting time has passed.
  */
-function SimpleAI::HasWaitingTimePassed()
+function EmotionAI::HasWaitingTimePassed()
 {
 	local date = AIDate.GetCurrentDate();
 	local waitingtime = AIController.GetSetting("waiting_time") + (AIDate.GetYear(date) - inauguration) * AIController.GetSetting("slowdown") * 4;
@@ -453,7 +453,7 @@ function SimpleAI::HasWaitingTimePassed()
 /**
  * Removes the unfinished route started before saving the game.
  */
-function SimpleAI::RemoveUnfinishedRoute()
+function EmotionAI::RemoveUnfinishedRoute()
 {
 	AILog.Info("Removing the unfinished route after loading...");
 	switch (toremove.vehtype) {
@@ -486,7 +486,7 @@ function SimpleAI::RemoveUnfinishedRoute()
  * @param height The height of the rectangle.
  * @return True if the rectangle is within the influence of the town.
  */
-function SimpleAI::IsRectangleWithinTownInfluence(tile, town_id, width, height)
+function EmotionAI::IsRectangleWithinTownInfluence(tile, town_id, width, height)
 {
 	if (width <= 1 && height <= 1) return AITile.IsWithinTownInfluence(tile, town_id);
 	local offsetX = AIMap.GetTileIndex(width - 1, 0);
@@ -500,7 +500,7 @@ function SimpleAI::IsRectangleWithinTownInfluence(tile, town_id, width, height)
 /**
  * Upgrades existing bridges.
  */
-function SimpleAI::UpgradeBridges()
+function EmotionAI::UpgradeBridges()
 {
 	local railtype = AIRail.GetCurrentRailType();
 	builder = cBuilder(this);
@@ -511,7 +511,7 @@ function SimpleAI::UpgradeBridges()
 	bridgesupgraded = AIDate.GetYear(AIDate.GetCurrentDate());
 }
 
-function SimpleAI::ListContainsValuator(item, list)
+function EmotionAI::ListContainsValuator(item, list)
 {
 	return list.HasItem(item);
 }

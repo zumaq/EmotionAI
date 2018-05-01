@@ -1,6 +1,6 @@
 class cManager
 {
-		root = null; // Reference to the main SimpleAI instance
+		root = null; // Reference to the main EmotionAI instance
 		todepotlist = null; // A list of vehicles heading for the depot
 		eventqueue = null; // Used for loading the event queue from a savegame
 
@@ -132,7 +132,7 @@ function cManager::CheckEvents()
 					AIController.Sleep(75);
 					if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
 				}
-				todepotlist.AddItem(vehicle, SimpleAI.TD_SELL);
+				todepotlist.AddItem(vehicle, EmotionAI.TD_SELL);
 				break;
 
 			case AIEvent.ET_VEHICLE_WAITING_IN_DEPOT:
@@ -145,7 +145,7 @@ function cManager::CheckEvents()
 				}
 				if (todepotlist.HasItem(vehicle)) {
 					switch (todepotlist.GetValue(vehicle)) {
-						case SimpleAI.TD_SELL:
+						case EmotionAI.TD_SELL:
 							// Sell a vehicle because it is old or unprofitable
 							AILog.Info("Sold " + AIVehicle.GetName(vehicle) + ".");
 							if (AIVehicle.GetVehicleType(vehicle) == AIVehicle.VT_RAIL) {
@@ -155,11 +155,11 @@ function cManager::CheckEvents()
 							}
 							todepotlist.RemoveItem(vehicle);
 							break;
-						case SimpleAI.TD_REPLACE:
+						case EmotionAI.TD_REPLACE:
 							// Replace an old vehicle with a newer model
 							cManager.ReplaceVehicle(vehicle);
 							break;
-						case SimpleAI.TD_ATTACH_WAGONS:
+						case EmotionAI.TD_ATTACH_WAGONS:
 							// Attach more wagons to an existing train, if we didn't have enough money to buy all wagons beforehand
 							cBuilder.AttachMoreWagons(vehicle);
 							AIVehicle.StartStopVehicle(vehicle);
@@ -291,7 +291,7 @@ function cManager::CheckRoutes()
 							AIController.Sleep(75);
 							if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
 						}
-						todepotlist.AddItem(vehicle, SimpleAI.TD_REPLACE);
+						todepotlist.AddItem(vehicle, EmotionAI.TD_REPLACE);
 					}
 				}
 
@@ -398,7 +398,7 @@ function cManager::CheckRoutes()
 							AIController.Sleep(75);
 							if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
 						}
-						todepotlist.AddItem(vehicle, SimpleAI.TD_REPLACE);
+						todepotlist.AddItem(vehicle, EmotionAI.TD_REPLACE);
 					}
 				}
 
@@ -421,7 +421,7 @@ function cManager::CheckRoutes()
 								AIController.Sleep(75);
 								if (!AIVehicle.SendVehicleToDepot(train)) break;
 							}
-							todepotlist.AddItem(train, SimpleAI.TD_ATTACH_WAGONS);
+							todepotlist.AddItem(train, EmotionAI.TD_ATTACH_WAGONS);
 						}
 						AIRail.SetCurrentRailType(railtype);
 					}
@@ -501,7 +501,7 @@ function cManager::CheckRoutes()
 					if (Banker.GetMaxBankBalance() > (Banker.GetMinimumCashNeeded() + AIEngine.GetPrice(engine))) {
 						AILog.Info(AIVehicle.GetName(vehicle) + " is getting old, sending it to the hangar...");
 						if (!AIVehicle.SendVehicleToDepot(vehicle)) break;
-						todepotlist.AddItem(vehicle, SimpleAI.TD_REPLACE);
+						todepotlist.AddItem(vehicle, EmotionAI.TD_REPLACE);
 					}
 				}
 

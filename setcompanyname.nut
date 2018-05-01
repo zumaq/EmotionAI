@@ -1,6 +1,6 @@
 // This file is a contribution by 3iff.
 
-/* AI company naming code. Originally designed for SimpleAI v9.
+/* AI company naming code. Originally designed for EmotionAI v9.
    Names are English based. It's quite simple to add or change names if desired.
    It should be quite easy to incorporate this into other AI newgrfs.
    Various naming formats, personal names, initials, generalised company names and town names.
@@ -9,7 +9,7 @@
    Copyright (C) 2015 3iff.
    Licensed under GPL(v2)
 
-   Thanks to Brumi for writing SimpleAI - which allowed me to create this mod.
+   Thanks to Brumi for writing EmotionAI - which allowed me to create this mod.
 
 */
 

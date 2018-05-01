@@ -976,7 +976,7 @@ function cBuilder::GetTilesAroundTown(town_id, width, height)
 		offset = AIMap.GetTileIndex(radius, radius);
 	}
 	tiles.AddRectangle(townplace - offset, townplace + offset);
-	tiles.Valuate(SimpleAI.IsRectangleWithinTownInfluence, town_id, width, height);
+	tiles.Valuate(EmotionAI.IsRectangleWithinTownInfluence, town_id, width, height);
 	tiles.KeepValue(1);
 	return tiles;
 }

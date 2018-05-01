@@ -1,4 +1,4 @@
-SimpleAI v12 - 2017/05/10
+EmotionAI v12 - 2017/05/10
 ------------------------
 
 Contents
@@ -13,12 +13,12 @@ Contents
 
 1. Introduction
 ---------------
-SimpleAI is an AI written for OpenTTD, which tries to imitate the old AI 
+EmotionAI is an AI written for OpenTTD, which tries to imitate the old AI
 (the one which was present in TTD, and OpenTTD versions until 0.6.3) in
 its playing style.
 The AI builds simple point-to-point routes using road vehicles, trains
 and aircraft. Station layout is similar to that of the old AI.
-SimpleAI supports all default cargoes, but it will try to use most NewGRF
+EmotionAI supports all default cargoes, but it will try to use most NewGRF
 cargoes as well.
 
 2. Usage
@@ -31,11 +31,11 @@ for details.
 Number of days to start this AI after the previous one (give or take) - You can configure
 how much time the AI will wait before founding its company.
 
-Use trains - Allows/disallows building trains for SimpleAI.
+Use trains - Allows/disallows building trains for EmotionAI.
 
-Use road vehicles - Allows/disallows building road vehicles for SimpleAI.
+Use road vehicles - Allows/disallows building road vehicles for EmotionAI.
 
-Use aircraft - Allows/disallows building aircraft for SimpleAI.
+Use aircraft - Allows/disallows building aircraft for EmotionAI.
 
 Note: If you disallow using a specific vehicle type for all AIs in the Advanced settings,
 these settings are overridden. However, if you want to change these settings during the
@@ -43,15 +43,15 @@ game, changing the AI's own settings is preferred, as it still allows to finish 
 under construction and to maintain existing vehicles.
 
 Build new routes if transported percentage is smaller than this value - With this setting
-you can configure how much SimpleAI will compete with other companies. The higher the value,
-the more competitive SimpleAI will be. When building a new connection, firstly it checks
+you can configure how much EmotionAI will compete with other companies. The higher the value,
+the more competitive EmotionAI will be. When building a new connection, firstly it checks
 how much of the cargo is transported from the given industry by other companies. If it is
 higher than this value, the AI will move on to another industry.
 
 The chance of taking subsidies - This setting allows you to configure how much the AI will
 go for subsidies. The AI will ignore subsudies if it is set to 0, and will always try to get
 subsidies if it is set to 10. It is recommended to set it to a lower value if more instances
-of SimpleAI are present in the game.
+of EmotionAI are present in the game.
 
 The maximum number of road vehicles on a route - You can configure how much road vehicles
 are allowed to run on a single route. This is useful to avoid congestion.
@@ -80,7 +80,7 @@ stations for freight trains. Tested with the Industrial Stations Renewal 0.8.0.
 
 4. Recommended configuration
 ----------------------------
-SimpleAI is not compatibile with articulated road vehicles (it is no problem if there
+EmotionAI is not compatibile with articulated road vehicles (it is no problem if there
 are articulated vehicles present, the AI just won't use them).
 
 It is also recommended to enable building on slopes, as the AI doesn't terraform while
@@ -95,7 +95,7 @@ will try to build at the same place when a new subsidy appears.
 
 5. Dependencies
 ---------------
-SimpleAI depends on the following libraries:
+EmotionAI depends on the following libraries:
 - Pathfinder.Road v4
 - Pathfinder.Rail v1
 - Graph.AyStar v4 (a dependency of the rail pathfinder)
@@ -110,13 +110,13 @@ Install these libraries into the ai/library subdirectory of OpenTTD.
 
 6. License
 ----------
-SimpleAI is licensed under version 2 of the GNU General Public License. See license.txt
+EmotionAI is licensed under version 2 of the GNU General Public License. See license.txt
 for details.
-SimpleAI reuses code from NoCAB (Terraform.nut), PAXLink (cBuilder::CostToFlattern) and
+EmotionAI reuses code from NoCAB (Terraform.nut), PAXLink (cBuilder::CostToFlattern) and
 DictatorAI (cBuilder::GetEngineEfficiency, cBuilder::GetEngineRawEfficiency).
 The AI contains code contributed by 3iff: setcompanyname.nut
 
 7. Support
 ----------
-Discussion about SimpleAI can be found here: http://www.tt-forums.net/viewtopic.php?f=65&t=44809
+Discussion about EmotionAI can be found here: http://www.tt-forums.net/viewtopic.php?f=65&t=44809
 You're welcome to post bug reports and other comments :)

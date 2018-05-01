@@ -84,7 +84,7 @@ function Banker::MinimumMoneyToBuild(routecount)
 {
 	if ((routecount >= 5) || !use_roadvehs) {
 		// Basically it's 40,000 plus the price of the engine needed.
-		local passengers = SimpleAI.GetPassengersCargo();
+		local passengers = EmotionAI.GetPassengersCargo();
 		local wagon = cBuilder.ChooseWagon(passengers, null);
 		local price = 0;
 		if (wagon != null) {
@@ -108,7 +108,7 @@ function Banker::MinimumMoneyToBuild(routecount)
  */
 function Banker::MinimumMoneyToUseAircraft()
 {
-	local cheapest = cBuilder.ChoosePlane(SimpleAI.GetPassengersCargo(), false, 16384, true);
+	local cheapest = cBuilder.ChoosePlane(EmotionAI.GetPassengersCargo(), false, 16384, true);
 	if (cheapest == null) return -1;
 	local price = AIEngine.GetPrice(cheapest);
 	return Banker.InflatedValue(40000) + price;

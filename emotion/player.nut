@@ -5,7 +5,7 @@
 
 require("towns.nut");
 
- /** TODO: LOAD AND SAVE THE PLAYERS WITH POINTS
+ /**
   * @brief class Player, don't be fooled by the name. The name just states and handles
   *  one company as a one player. But in reality you can cooperate with other players
   *  in the same company. Currently Maximum Number of companies that can be on a server is 15.
@@ -26,40 +26,96 @@ class Player
 	constructor(id){
 		this._player_id = id;
 		this._road_blockade_tiles = array(0);
-        this._station_tiles = array(0);
+    this._station_tiles = array(0);
 		this._towns = Towns();
 		this._karma_points = DEFAULT_KARMA_POINTS;
 		_quotient = 1;
 	}
 
+	/**
+	* @brief AddKarmaPoints, Adds karma points to player
+	* @param points, the number of points added
+	*/
 	function AddKarmaPoints(points);
 
+	/**
+	* @brief ResetKarmaPoints, reset points to default
+	*/
 	function ResetKarmaPoints();
 
+	/**
+	* @brief AddRoadBlockedTile, adds blocked tile to array
+	* @param tile, tile of the blockade
+	*/
 	function AddRoadBlockedTile(tile);
 
-    function AddStationTile(tile);
+	/**
+	* @brief AddStationTile, adds station tile of player to set
+	* @param tile, station tile
+	*/
+  function AddStationTile(tile);
 
+	/**
+	* @brief AddTown, adds town to set
+	* @param townID, ID of the town
+	*/
 	function AddTown(townId);
 
+	/**
+	* @brief ClearTowns, clears the array of towns
+	*/
 	function ClearTowns();
 
+	/**
+	* @brief PunishPlayer, punishes the player by his karma points
+	*/
 	function PunishPlayer();
 
+	/**
+	* @brief MorePunishPlayer, punishes the player harder
+	*/
 	function MorePunishPlayer();
 
+	/**
+	* @brief CheckRoadBlockedTiles, Checks the blocked tiles,
+	* if some is removed, remove it and add points
+	*/
 	function CheckRoadBlockedTiles();
 
+	/**
+	* @brief CheckStationTiles, Checks the station tiles,
+	* if some is removed, remove it and add points
+	*/
 	function CheckStationTiles();
 
+	/**
+	* @brief CalculateKarmaPointsForStation, determines the points
+	* @param tile, tile of the station
+	*/
 	function CalculateKarmaPointsForStation(tile);
 
+	/**
+	* @brief RemoveRoadBlockedTile, removes the blocked tile from array
+	* @param tile, tile to be removed
+	*/
 	function RemoveRoadBlockedTile(tile);
 
+	/**
+	* @brief RemoveStationTile, removes the station tile from array
+	* @param tile, tile to be removed
+	*/
 	function RemoveStationTile(tile);
 
+	/**
+	* @brief IsRoadBlockedTileSet, determines if it is set
+	* @param tile, tile you want to check
+	*/
 	function IsRoadBlockedTileSet(tile);
 
+	/**
+	* @brief IsStationTileSet, determines if it is set
+	* @param tile, tile you want to check
+	*/
 	function IsStationTileSet(tile);
 
 	/**
@@ -256,6 +312,6 @@ function Player::Load(data){
 	if(data.rawin("road_blocked_tiles")) player._road_blockade_tiles = data.rawget("road_blocked_tiles");
 	if(data.rawin("station_blocked_tiles")) player._station_tiles = data.rawget("station_blocked_tiles");
 	if(data.rawin("towns")) player._towns = Towns.Load(data.rawget("towns"));
-	
+
 	return player;
 }

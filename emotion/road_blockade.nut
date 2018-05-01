@@ -29,7 +29,6 @@ class RoadBlockade
 
 	/**
 	* @brief MakeBlockadePassable, makes the alredy built blockade passable again
-	* //TODO: make so that the train for the person with good karma gets sent to depo.
 	*/
 	function MakeBlockadePassable();
 
@@ -422,7 +421,7 @@ function RoadBlockade::FindBestPath(startTile, endTile){
 	pathfinder.cost.no_existing_road=-20;
 	pathfinder.cost.turn=0;
   */
-	pathfinder.cost.bridge_per_tile = -20;
+	pathfinder.cost.bridge_per_tile = 1;
 
 	pathfinder.InitializePath([startTile], [endTile]);
 	local counter = 0;

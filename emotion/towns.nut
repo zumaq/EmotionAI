@@ -3,7 +3,7 @@
  * @file towns.nut
  */
 
- /** TODO: LOAD AND SAVE THE TOWN LIST
+ /**
   * @brief class Towns, is a representation for each players cities, making construction work, etc.
   */
 class Towns

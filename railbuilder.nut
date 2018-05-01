@@ -300,7 +300,7 @@ function cBuilder::ChooseWagon(cargo, blacklist)
 		wagonlist.KeepValue(0);
 	}
 	if (blacklist != null) {
-		wagonlist.Valuate(SimpleAI.ListContainsValuator, blacklist);
+		wagonlist.Valuate(EmotionAI.ListContainsValuator, blacklist);
 		wagonlist.KeepValue(0);
 	}
 	wagonlist.Valuate(AIEngine.GetCapacity);
@@ -387,7 +387,7 @@ function cBuilder::BuildAndStartTrains(number, length, engine, wagon, ordervehic
 	local mailwagontype = null, mailwagon = null;
 	if ((length > 3) && (AICargo.GetTownEffect(crg) == AICargo.TE_PASSENGERS)) {
 		// Choose a wagon for mail
-		local mailcargo = SimpleAI.GetMailCargo();
+		local mailcargo = EmotionAI.GetMailCargo();
 		mailwagontype = cBuilder.ChooseWagon(mailcargo, root.engineblacklist);
 		if (mailwagontype == null) mailwagontype = wagon;
 		if (AICompany.GetBankBalance(AICompany.COMPANY_SELF) < AIEngine.GetPrice(mailwagontype)) {
@@ -1241,7 +1241,7 @@ function cBuilder::ChooseTrainEngine(crg, distance, wagon, num_wagons, blacklist
 	enginelist.Valuate(AIEngine.CanPullCargo, crg);
 	enginelist.KeepValue(1);
 	if (blacklist != null) {
-		enginelist.Valuate(SimpleAI.ListContainsValuator, blacklist);
+		enginelist.Valuate(EmotionAI.ListContainsValuator, blacklist);
 		enginelist.KeepValue(0);
 	}
 	if (enginelist.IsEmpty()) return null;
