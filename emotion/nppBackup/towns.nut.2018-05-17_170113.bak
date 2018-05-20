@@ -663,29 +663,17 @@ function Towns::DecideAndPunish(points){
 	} else if (points > 120) {
 		Towns.BuildTownStatue();
 		return;
-	} else if (points > 110) {
+	} else if (points > 100) {
 		Towns.FundBuildings();
 		return;
-	} else if (points > 100) {
+	} else if (points > 80) {
 		Towns.RebuildRoads();
 		return;
-	} else if (points > 90) {
+	} else if (points > 60) {
 		Towns.BuyRights();
 		return;
-	} else if (points > 80) {
-		Towns.BuildRoadBlockade();
-		return;
-	} else if (points > 70) {
-		Towns.BribeTown();
-		return;
-	} else if (points > 60) {
-		Towns.DestroyDepoTileInCity();
-		return;
-	} else if (points > 50) {
-		Towns.BuildHeliPorts();
-		return;
 	} else if (points > 40) {
-		Towns.SurroundCityWithRails();
+		Towns.BribeTown();
 		return;
 	}
 }

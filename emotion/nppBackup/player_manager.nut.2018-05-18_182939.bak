@@ -834,7 +834,7 @@ function PlayerManager::PrintPoints(){
 		local points = this._player_list[i]._karma_points;
 		local id = this._player_list[i]._player_id;
 		AILog.Info("Player with id: " + id + ", has karma of: " + points + ". " + this._player_list[i]._station_tiles.len());
-		//this._player_list[i]._towns.PrintTownRatings();
+		this._player_list[i]._towns.PrintTownRatings();
 		//for(local k=0; k < this._player_list[i]._station_tiles.len(); k++){
 		//	AILog.Info("Station tile: " + this._player_list[i]._station_tiles[k]);
 		//}

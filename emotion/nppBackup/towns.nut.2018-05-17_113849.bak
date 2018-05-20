@@ -186,8 +186,8 @@ function Towns::AddTown(townId, rating){
 }
 
 function Towns::SortTownList(){
-	//_town_list.Valuate(AITown.GetRating); //dosent need a valuator, there altredy is a value in the list
-	this._town_list.Sort(AIList.SORT_BY_VALUE, false);
+	//_town_list.Valuate(AITown.GetRating); dosent need a valuator, there altredy is a value in the list
+	this._town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 }
 
 function EmptyList(){
@@ -199,7 +199,7 @@ function Towns::BuildTownStatue(){
 	local candidateTown = this._town_list.Begin();
 	while (HasStatue(candidateTown) || this._town_list.GetValue(candidateTown) == 0) {
 		candidateTown = this._town_list.Next();
-		//AILog.Info("While cycle.");
+		AILog.Info("While cycle.");
 		if(this._town_list.IsEnd()){
 			return false;
 		}
@@ -215,7 +215,7 @@ function Towns::BribeTown(){
 	local candidateTown = this._town_list.Begin();
 	while(!AITown.IsActionAvailable(candidateTown, AITown.TOWN_ACTION_BRIBE)){
 		candidateTown = this._town_list.Next();
-		//AILog.Info("While cycle.");
+		AILog.Info("While cycle.");
 		if(this._town_list.IsEnd()){
 			return false;
 		}
@@ -232,7 +232,7 @@ function Towns::RebuildRoads(){
 	AILog.Info("Starting rebuild roads");
 	while(!AITown.IsActionAvailable(candidateTown, AITown.TOWN_ACTION_ROAD_REBUILD)){
 		candidateTown = this._town_list.Next();
-		//AILog.Info("While cycle.");
+		AILog.Info("While cycle.");
 		if(this._town_list.IsEnd()){
 			return false;
 		}
@@ -248,7 +248,7 @@ function Towns::FundBuildings(){
 	local candidateTown = this._town_list.Begin();
 	while(!AITown.IsActionAvailable(candidateTown, AITown.TOWN_ACTION_FUND_BUILDINGS)){
 		candidateTown = this._town_list.Next();
-		//AILog.Info("While cycle.");
+		AILog.Info("While cycle.");
 		if(this._town_list.IsEnd()){
 			return false;
 		}
@@ -264,7 +264,7 @@ function Towns::BuyRights(){
 	local candidateTown = this._town_list.Begin();
 	while(!AITown.IsActionAvailable(candidateTown, AITown.TOWN_ACTION_BUY_RIGHTS)){
 		candidateTown = this._town_list.Next();
-		//AILog.Info("While cycle.");
+		AILog.Info("While cycle.");
 		if(this._town_list.IsEnd()){
 			return false;
 		}
@@ -283,7 +283,7 @@ function Towns::Advertise(size){
 	local candidateTown = this._town_list.Begin();
 	while(!AITown.IsActionAvailable(candidateTown, size)){
 		candidateTown = this._town_list.Next();
-		//AILog.Info("While cycle.");
+		AILog.Info("While cycle.");
 		if(this._town_list.IsEnd()){
 			return false;
 		}
@@ -299,8 +299,8 @@ function Towns::CheckAirportTiles(tile, distance){
 	local moves = distance * 2;
 	for (local l = 0; l < 4; l++){
 		for (local i = 0; i < moves; i++){
-			//AILog.Info("CheckAirportTiles cycle: " + i +
-			//			"tile x: " + AIMap.GetTileX(candidateTile) + "tile y: " + AIMap.GetTileY(candidateTile));
+			AILog.Info("CheckAirportTiles cycle: " + i +
+						"tile x: " + AIMap.GetTileX(candidateTile) + "tile y: " + AIMap.GetTileY(candidateTile));
 			if (AITile.IsBuildable(candidateTile)){
 				return candidateTile;
 			}
@@ -338,7 +338,7 @@ function Towns::BuildHeliPorts(){
 	local candidateTile = AITown.GetLocation(candidateTown);
 	AILog.Info("town with tile: " + candidateTile + " has noise level: " + AITown.GetAllowedNoise(candidateTown));
 	for (local i=0; !AIAirport.BuildAirport(candidateTile, AIAirport.AT_HELIPORT, AIStation.STATION_NEW); i++){
-		//AILog.Info("BuildHeliPorts cycle: " + i);
+		AILog.Info("BuildHeliPorts cycle: " + i);
 		candidateTile = Towns.CheckAirportTiles(candidateTile, i);
 	}
 	return candidateTile;
@@ -402,7 +402,7 @@ function Towns::DestroyDepoTileInCity(){
 	for (local l=0; depoTile == AITown.GetLocation(candidateTown) && l < 2; l++){
 		AILog.Info("Checking town with name: " + AITown.GetName(candidateTown));
 		for (local i=0; depoTile == AITown.GetLocation(candidateTown) && i < 8; i++){
-			//AILog.Info("Depofinding cycle: " + i);
+			AILog.Info("Depofinding cycle: " + i);
 			depoTile = Towns.CheckDepoTileInCity(depoTile, i);
 		}
 		if (depoTile == AITown.GetLocation(candidateTown)){ // if you cant find one then check other city
@@ -656,36 +656,24 @@ function Towns::BuildRoadBlockade(){
 }
 
 function Towns::DecideAndPunish(points){
-	//points - 0 100 200 case has bad syntax in range contitions
+	//points - 0 100 200 case has bad syntax
 	if (points > 140) {
 		Towns.Advertise((points-140) % 20);
 		return;
 	} else if (points > 120) {
 		Towns.BuildTownStatue();
 		return;
-	} else if (points > 110) {
+	} else if (points > 100) {
 		Towns.FundBuildings();
 		return;
-	} else if (points > 100) {
+	} else if (points > 80) {
 		Towns.RebuildRoads();
 		return;
-	} else if (points > 90) {
+	} else if (points > 60) {
 		Towns.BuyRights();
 		return;
-	} else if (points > 80) {
-		Towns.BuildRoadBlockade();
-		return;
-	} else if (points > 70) {
-		Towns.BribeTown();
-		return;
-	} else if (points > 60) {
-		Towns.DestroyDepoTileInCity();
-		return;
-	} else if (points > 50) {
-		Towns.BuildHeliPorts();
-		return;
 	} else if (points > 40) {
-		Towns.SurroundCityWithRails();
+		Towns.BribeTown();
 		return;
 	}
 }

@@ -268,9 +268,8 @@ function cManager::CheckRoutes()
 
 				/* Check for depo tyles blocked */
 				route.homedepot = root.players.CheckForDepoTileBlockade(route.homedepot);
-				//route.deptile = root.players.CheckForDepoTileBlockade(route.deptile);
 
-				/* Check industry or town stations*/
+				/* Check industry or tonw stations*/
 				if ((AICargo.GetTownEffect(route.crg) == AICargo.TE_MAIL)||(AICargo.GetTownEffect(route.crg) == AICargo.TE_PASSENGERS)){
 					root.players.CheckForOtherTownStations(startStation, endStation);
 				} else {

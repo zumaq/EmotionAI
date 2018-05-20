@@ -264,7 +264,6 @@ function PlayerManager::AddKarmaPointsToAll(){
 	for(local i = 0; i < MAX_PLAYERS; i++) {
 		this._player_list[i].AddKarmaPoints(points);
 	}
-	this.PrintPoints();
 	return true;
 }
 
@@ -279,10 +278,7 @@ function PlayerManager::ResetPlayerPoints(playerID){
 
 function PlayerManager::AssignTowns(){
 	local townlist = AITownList();
-	townlist.Valuate(AITown.GetPopulation);
-	townlist.Sort(AIList.SORT_BY_VALUE, false);
 	this.ClearAllPlayersTownsRating();
-	local count = 0;
 	for(local l = townlist.Begin(); !townlist.IsEnd(); l = townlist.Next()) {
 		for(local i = 0; i < MAX_PLAYERS; i++) {
 			if (-1 == AITown.GetRating(l, i)){
@@ -290,9 +286,6 @@ function PlayerManager::AssignTowns(){
 			}
 			this._player_list[i].AddTown(l);
 		}
-		count++;
-		if (count > 200) break;  //this has to be here so that the towns lists are not as big on large maps
-								//if you delete this you cant run EmotionAI on large map !
 	}
 }
 
@@ -329,7 +322,7 @@ function PlayerManager::RailTileAround(candidateTile){
 }
 
 function PlayerManager::CheckVehicles(src, dest, vehicle){
-	//AILog.Info("Checking vehicles");
+	AILog.Info("Checking vehicles");
 	local tile = null;
 	for(local i = 0; i<vehicle.len(); ++i){
 		local tmpTile = this.CheckVehicleBlockade(vehicle[i]);
@@ -471,7 +464,7 @@ function PlayerManager::CheckAndPunishStations(industry){
 				//			"tile x: " + AIMap.GetTileX(candidateTile) + "tile y: " + AIMap.GetTileY(candidateTile));
 				if (AITile.IsStationTile(candidateTile) && !AICompany.IsMine(AITile.GetOwner(candidateTile))
 					&& AIIndustry.GetDistanceManhattanToTile(industry, candidateTile) < 13){
-					//AILog.Info("Found station at industry punish owner: " + AITile.GetOwner(candidateTile));
+					AILog.Info("Found station at industry punish owner: " + AITile.GetOwner(candidateTile));
 					array.push(candidateTile);
 					//this.AddKarmaPoints(AITile.GetOwner(candidateTile), -50);
 				}
@@ -494,16 +487,15 @@ function PlayerManager::CheckAndPunishStations(industry){
 }
 
 function PlayerManager::CheckForOtherIndustryStations(stationTile){
-	//AILog.Info("Checking Industry stations");
+	AILog.Info("Checking Industry stations");
 	local industries = this.CheckForIndustry(stationTile);
 	local tileArray = array(0);
 	for(local i = 0; i < industries.len(); ++i) {
 		tileArray.extend(this.CheckAndPunishStations(industries[i])); //test this
 	}
   for (local i=0; i<tileArray.len(); i++){
-    local owner = AITile.GetOwner(tileArray[i]);
-	if (owner < 0 || owner > 14) continue;
-    if (this._player_list[owner].IsStationTileSet(tileArray[i]) == false){
+    local owner = AITile.GetOwner(stationTile[i]);
+    if (this._player_list[i].IsStationTileSet(tileArray[i]) == false){
       this.CheckTileAndOwner(owner, tileArray[i]);
       this._player_list[owner]._station_tiles.push(tileArray[i]);
       AILog.Info("Added tile to list " + tileArray[i] + " owner: " + owner);
@@ -520,11 +512,8 @@ function PlayerManager::FindOtherBusStops(tile){
 			for (local i = 0; i < moves; i++){
 				//AILog.Info("CheckOtherStation cycle: " + i +
 				//			"tile x: " + AIMap.GetTileX(candidateTile) + "tile y: " + AIMap.GetTileY(candidateTile));
-				local owner = AITile.GetOwner(candidateTile);
-				if (owner < 0 || owner > 14) continue;
-				if (AITile.IsStationTile(candidateTile) && !AICompany.IsMine(owner)
-					&& !this._player_list[owner].IsStationTileSet(candidateTile)){
-					//AILog.Info("Found bus station punish owner: " + AITile.GetOwner(candidateTile));
+				if (AITile.IsStationTile(candidateTile) && !AICompany.IsMine(AITile.GetOwner(candidateTile))){
+					AILog.Info("Found bus station punish owner: " + AITile.GetOwner(candidateTile));
 					array.push(candidateTile);
 					//this.AddKarmaPoints(AITile.GetOwner(candidateTile), -50);
 				}
@@ -582,7 +571,7 @@ function PlayerManager::IsDemolishedTile(candidateTile){
 										candidateTile + AIMap.GetTileIndex(0,-1), candidateTile + AIMap.GetTileIndex(0,1)];
 		local count_roads = 0;
 		local count_rails = 0;
-		//AILog.Info("test outside");
+		AILog.Info("test outside");
 		for(local i=0; i<tiles.len(); i++){
 			//AILog.Info("test" + i);
 			if(AIRoad.IsRoadTile(tiles[i])){
@@ -679,11 +668,10 @@ function PlayerManager::BuildNewPath(start, end){
 
 function PlayerManager::CheckForOtherTownStations(stationTile, endStationTile){
 	//add them to array and punish by that
-	//AILog.Info("Checking Town stations");
+	AILog.Info("Checking Town stations");
 	local stationTiles = this.FindOtherBusStops(stationTile);
 	for (local i=0; i<stationTiles.len(); i++){
 	  local owner = AITile.GetOwner(stationTiles[i]);
-	  if (owner < 0 || owner > 14) continue;
 	  if (this._player_list[owner].IsStationTileSet(stationTiles[i]) == false){
 		this.CheckTileAndOwner(owner, stationTiles[i]);
 		this._player_list[owner]._station_tiles.push(stationTiles[i]);
@@ -694,7 +682,6 @@ function PlayerManager::CheckForOtherTownStations(stationTile, endStationTile){
 	local endStationTiles = this.FindOtherBusStops(endStationTile);
 	for (local i=0; i<endStationTiles.len(); i++){
 	  local owner = AITile.GetOwner(endStationTiles[i]);
-	  if (owner < 0 || owner > 14) continue;
 	  if (this._player_list[owner].IsStationTileSet(endStationTiles[i]) == false){
 		this.CheckTileAndOwner(owner, endStationTiles[i]);
 		this._player_list[owner]._station_tiles.push(endStationTiles[i]);
@@ -794,7 +781,6 @@ function PlayerManager::CheckForRoadBlockadeOnPath(path, vehicleTile){
 		owner = this._roadBlockade.WhoDidTheBlockade(blockadeTile, 0);
 	}
 	AILog.Info("-----> Blockade on tile: " + blockadeTile + " owner: " + owner);
-	if (owner < 0 || owner > 14) return;
 	if (this._player_list[owner].IsRoadBlockedTileSet(blockadeTile) == false){
 		this.AddKarmaPoints(owner, -30);
 		this._player_list[owner]._road_blockade_tiles.push(blockadeTile);
@@ -809,14 +795,13 @@ function PlayerManager::CheckForRoadBlockadeOnPath(path, vehicleTile){
 }
 
 function PlayerManager::CheckForDepoTileBlockade(depoTile){
-	//AILog.Info("Checking Depo tile blockade");
+	AILog.Info("Checking Depo tile blockade");
 	local newDepo = this._roadBlockade.IsBlockadeInFrontOfDepo(depoTile);
 	local tileFront = AIRoad.GetRoadDepotFrontTile(depoTile);
 	if (newDepo == null){
 		return depoTile;
 	}
 	local owner = AITile.GetOwner(tileFront);
-	if (owner < 0 || owner > 14) return;
 	this.AddKarmaPoints(owner, -50);
 	this._player_list[owner]._road_blockade_tiles.push(tileFront);
 	if(newDepo == 0){
@@ -834,10 +819,10 @@ function PlayerManager::PrintPoints(){
 		local points = this._player_list[i]._karma_points;
 		local id = this._player_list[i]._player_id;
 		AILog.Info("Player with id: " + id + ", has karma of: " + points + ". " + this._player_list[i]._station_tiles.len());
-		//this._player_list[i]._towns.PrintTownRatings();
-		//for(local k=0; k < this._player_list[i]._station_tiles.len(); k++){
-		//	AILog.Info("Station tile: " + this._player_list[i]._station_tiles[k]);
-		//}
+		this._player_list[i]._towns.PrintTownRatings();
+		for(local k=0; k < this._player_list[i]._station_tiles.len(); k++){
+			AILog.Info("Station tile: " + this._player_list[i]._station_tiles[k]);
+		}
 	}
 }
 

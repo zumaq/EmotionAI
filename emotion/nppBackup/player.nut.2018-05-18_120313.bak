@@ -28,7 +28,7 @@ class Player
 		this._player_id = id;
 		this._road_blockade_tiles = array(0);
 		this._station_tiles = array(0);
-		this._towns = Towns();
+		//this._towns = Towns();
 		this._karma_points = DEFAULT_KARMA_POINTS;
 		_quotient = 1;
 	}
@@ -179,12 +179,12 @@ function Player::AddStationTile(tile){
 }
 
 function Player::AddTown(townId){
-	local rating = AITown.GetRating(townId, this._player_id);
-	return this._towns.AddTown(townId, rating);
+	//local rating = AITown.GetRating(townId, this._player_id);
+	//return this._towns.AddTown(townId, rating);
 }
 
 function Player::ClearTowns(){
-	this._towns.EmptyList();
+	//this._towns.EmptyList();
 }
 
 function Player::CheckAndPunish(){
@@ -194,14 +194,14 @@ function Player::CheckAndPunish(){
 		return false;
 	}
 
-	if (this._karma_points < 100 || this._quotient > 1){
-		AILog.Info("Player has < 80 karma points, he gets light punish");
+	if (this._karma_points >= 100 && this._quotient > 1){
+		AILog.Info("Player has > 100 karma points, he gets light punish");
 		this.LightPunishPlayer();
 		return true;
 	}
 
-	//AILog.Info("Player has >50 & <100 karma points, he gets more punish");
-	//this.MorePunishPlayer(); //if you want to be more hard on your oponents enable this
+	AILog.Info("Player has >50 & <100 karma points, he gets more punish");
+	this.MorePunishPlayer();
 	return true;
 }
 

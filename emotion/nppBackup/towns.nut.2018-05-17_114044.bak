@@ -186,8 +186,8 @@ function Towns::AddTown(townId, rating){
 }
 
 function Towns::SortTownList(){
-	//_town_list.Valuate(AITown.GetRating); //dosent need a valuator, there altredy is a value in the list
-	this._town_list.Sort(AIList.SORT_BY_VALUE, false);
+	_town_list.Valuate(AITown.GetRating); dosent need a valuator, there altredy is a value in the list
+	this._town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 }
 
 function EmptyList(){
@@ -656,36 +656,24 @@ function Towns::BuildRoadBlockade(){
 }
 
 function Towns::DecideAndPunish(points){
-	//points - 0 100 200 case has bad syntax in range contitions
+	//points - 0 100 200 case has bad syntax
 	if (points > 140) {
 		Towns.Advertise((points-140) % 20);
 		return;
 	} else if (points > 120) {
 		Towns.BuildTownStatue();
 		return;
-	} else if (points > 110) {
+	} else if (points > 100) {
 		Towns.FundBuildings();
 		return;
-	} else if (points > 100) {
+	} else if (points > 80) {
 		Towns.RebuildRoads();
 		return;
-	} else if (points > 90) {
+	} else if (points > 60) {
 		Towns.BuyRights();
 		return;
-	} else if (points > 80) {
-		Towns.BuildRoadBlockade();
-		return;
-	} else if (points > 70) {
-		Towns.BribeTown();
-		return;
-	} else if (points > 60) {
-		Towns.DestroyDepoTileInCity();
-		return;
-	} else if (points > 50) {
-		Towns.BuildHeliPorts();
-		return;
 	} else if (points > 40) {
-		Towns.SurroundCityWithRails();
+		Towns.BribeTown();
 		return;
 	}
 }

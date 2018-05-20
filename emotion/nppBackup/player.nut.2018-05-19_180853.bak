@@ -194,7 +194,7 @@ function Player::CheckAndPunish(){
 		return false;
 	}
 
-	if (this._karma_points < 100 || this._quotient > 1){
+	if (this._karma_points < 80 || this._quotient > 1){
 		AILog.Info("Player has < 80 karma points, he gets light punish");
 		this.LightPunishPlayer();
 		return true;

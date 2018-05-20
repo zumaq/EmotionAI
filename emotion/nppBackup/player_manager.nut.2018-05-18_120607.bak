@@ -280,9 +280,8 @@ function PlayerManager::ResetPlayerPoints(playerID){
 function PlayerManager::AssignTowns(){
 	local townlist = AITownList();
 	townlist.Valuate(AITown.GetPopulation);
-	townlist.Sort(AIList.SORT_BY_VALUE, false);
+	townlist.Sort(AIAbstractList.SORT_BY_VALUE, false);
 	this.ClearAllPlayersTownsRating();
-	local count = 0;
 	for(local l = townlist.Begin(); !townlist.IsEnd(); l = townlist.Next()) {
 		for(local i = 0; i < MAX_PLAYERS; i++) {
 			if (-1 == AITown.GetRating(l, i)){
@@ -290,9 +289,6 @@ function PlayerManager::AssignTowns(){
 			}
 			this._player_list[i].AddTown(l);
 		}
-		count++;
-		if (count > 200) break;  //this has to be here so that the towns lists are not as big on large maps
-								//if you delete this you cant run EmotionAI on large map !
 	}
 }
 
@@ -834,7 +830,7 @@ function PlayerManager::PrintPoints(){
 		local points = this._player_list[i]._karma_points;
 		local id = this._player_list[i]._player_id;
 		AILog.Info("Player with id: " + id + ", has karma of: " + points + ". " + this._player_list[i]._station_tiles.len());
-		//this._player_list[i]._towns.PrintTownRatings();
+		this._player_list[i]._towns.PrintTownRatings();
 		//for(local k=0; k < this._player_list[i]._station_tiles.len(); k++){
 		//	AILog.Info("Station tile: " + this._player_list[i]._station_tiles[k]);
 		//}

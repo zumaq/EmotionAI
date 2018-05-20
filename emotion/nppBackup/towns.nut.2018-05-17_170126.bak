@@ -673,10 +673,10 @@ function Towns::DecideAndPunish(points){
 		Towns.BuyRights();
 		return;
 	} else if (points > 80) {
-		Towns.BuildRoadBlockade();
+		Towns.BribeTown();
 		return;
 	} else if (points > 70) {
-		Towns.BribeTown();
+		Towns.BuildRoadBlockade();
 		return;
 	} else if (points > 60) {
 		Towns.DestroyDepoTileInCity();

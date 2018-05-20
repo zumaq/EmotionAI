@@ -152,6 +152,7 @@ function Player::AddKarmaPoints(points){
 }
 
 function Player::ResetKarmaPoints(){
+	this._player_id = id;
 	this._road_blockade_tiles = array(0);
 	this._station_tiles = array(0);
 	this._towns = Towns();
@@ -194,14 +195,14 @@ function Player::CheckAndPunish(){
 		return false;
 	}
 
-	if (this._karma_points < 100 || this._quotient > 1){
-		AILog.Info("Player has < 80 karma points, he gets light punish");
+	if (this._karma_points >= 100 && this._quotient > 1){
+		AILog.Info("Player has > 100 karma points, he gets light punish");
 		this.LightPunishPlayer();
 		return true;
 	}
 
-	//AILog.Info("Player has >50 & <100 karma points, he gets more punish");
-	//this.MorePunishPlayer(); //if you want to be more hard on your oponents enable this
+	AILog.Info("Player has >50 & <100 karma points, he gets more punish");
+	this.MorePunishPlayer();
 	return true;
 }
 
